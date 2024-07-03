@@ -22,7 +22,8 @@ const getDateRange = (filter) => {
             break;
         default:
             startDate = new Date(now);
-            startDate.setHours(0, 0, 0, 0); // Default to start of today
+            startDate.setDate(now.getDate() - 7); 
+            startDate.setHours(0, 0, 0, 0);
             break;
     }
 

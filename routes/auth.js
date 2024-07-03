@@ -4,9 +4,9 @@ const decodeJWT = require('../middlewares/decodeJWT')
 const router = express.Router()
 
 
-router.post('/register', registeredUser)    
+router.post('/register', registeredUser)
 router.post('/login', loginUser)
-router.post('/reset', reset)    
+router.post('/reset', decodeJWT, reset)
 router.post('/add', decodeJWT, addUserByEmail);
 router.get('/allowedEmails', decodeJWT, getUserByEmail)
 

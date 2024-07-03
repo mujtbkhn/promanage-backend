@@ -77,7 +77,7 @@ const getTodoById = async (req, res, next) => {
 
 const getTodos = async (req, res, next) => {
     try {
-        const filter = req.query.filter || 'today';
+        const filter = req.query.filter || 'week';
         const { startDate, endDate } = getDateRange(filter);
         const userId = req.user.userId;
         const userEmail = req.user.email;
@@ -168,23 +168,23 @@ const getTaskCounts = async (req, res, next) => {
 
         // Query to count tasks based on different criteria
         const backlogCount = await Todo.countDocuments({ userId: userId, section: 'BACKLOG' });
-        const inProgressCount = await Todo.countDocuments({ userId: userId, section: 'IN PROGRESS' });
-        const todoCount = await Todo.countDocuments({ userId: userId, section: 'TODO' });
-        const doneCount = await Todo.countDocuments({ userId: userId, section: 'DONE' });
         const lowPriorityCount = await Todo.countDocuments({ userId: userId, priority: 'LOW' });
+        const todoCount = await Todo.countDocuments({ userId: userId, section: 'TODO' });
         const highPriorityCount = await Todo.countDocuments({ userId: userId, priority: 'HIGH' });
+        const inProgressCount = await Todo.countDocuments({ userId: userId, section: 'IN PROGRESS' });
         const moderatePriorityCount = await Todo.countDocuments({ userId: userId, priority: 'MODERATE' });
+        const doneCount = await Todo.countDocuments({ userId: userId, section: 'DONE' });
         const dueDateCount = await Todo.countDocuments({ userId: userId, dueDate: { $exists: true } });
 
         // Construct response with counts
         const counts = {
             backlogTasks: backlogCount,
-            inProgressTasks: inProgressCount,
-            todoTasks: todoCount,
-            doneTasks: doneCount,
             lowPriorityTasks: lowPriorityCount,
+            todoTasks: todoCount,
             highPriorityTasks: highPriorityCount,
+            inProgressTasks: inProgressCount,
             moderatePriorityTasks: moderatePriorityCount,
+            doneTasks: doneCount,
             dueDateTasks: dueDateCount
         };
 

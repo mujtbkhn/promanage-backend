@@ -85,9 +85,10 @@ const loginUser = async (req, res, next) => {
 
 const reset = async (req, res, next) => {
     try {
-        const { email, currentPassword, newName, newPassword } = req.body;
+        const { newName, currentPassword, newPassword } = req.body;
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: req.user.email });
+        console.log(req.user.email)
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -115,6 +116,7 @@ const reset = async (req, res, next) => {
         next(error);
     }
 }
+
 
 const addUserByEmail = async (req, res, next) => {
     try {

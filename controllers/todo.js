@@ -106,8 +106,6 @@ const getTodos = async (req, res, next) => {
     }
 };
 
-
-
 const updateTodo = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -148,6 +146,27 @@ const updateTodo = async (req, res, next) => {
     }
 };
 
+const updateChecklistItem = async (req, res, next) => {
+    try {
+        const { todoId, itemIndex } = req.params;
+        const { completed } = req.body;
+
+        const todo = await Todo.findById(todoId);
+        if (!todo) {
+            return res.status(404).json({ message: 'Todo not found' });
+        }
+
+        if (todo.checklist[itemIndex]) {
+            todo.checklist[itemIndex].completed = completed;
+            await todo.save();
+            return res.json({ message: 'Checklist item updated successfully', todo });
+        } else {
+            return res.status(404).json({ message: 'Checklist item not found' });
+        }
+    } catch (error) {
+        next(error);
+    }
+};
 
 const deleteTodo = async (req, res, next) => {
     try {
@@ -194,7 +213,6 @@ const getTaskCounts = async (req, res, next) => {
     }
 };
 
-
 const moveTask = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -219,4 +237,4 @@ const moveTask = async (req, res, next) => {
     }
 };
 
-module.exports = { createTodo, getTodoById, getTodos, updateTodo, deleteTodo, getTaskCounts, moveTask, logTodoById };
+module.exports = { createTodo, getTodoById, getTodos, updateTodo, deleteTodo, getTaskCounts, moveTask, logTodoById, updateChecklistItem };

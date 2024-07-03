@@ -85,7 +85,7 @@ const loginUser = async (req, res, next) => {
 
 const reset = async (req, res, next) => {
     try {
-        const { newName, currentPassword, newPassword } = req.body;
+        const { newName, currentPassword, newPassword, newEmail } = req.body;
 
         const user = await User.findOne({ email: req.user.email });
         console.log(req.user.email)
@@ -95,6 +95,14 @@ const reset = async (req, res, next) => {
 
         if (newName) {
             user.name = newName;
+        }
+
+        if (newEmail) {
+            const existingEmail = await User.findOne({ email: newEmail });
+            if (existingEmail) {
+                return res.status(400).json({ message: "Email already taken" });
+            }
+            user.email = newEmail;
         }
 
         if (newPassword) {
@@ -116,7 +124,6 @@ const reset = async (req, res, next) => {
         next(error);
     }
 }
-
 
 const addUserByEmail = async (req, res, next) => {
     try {

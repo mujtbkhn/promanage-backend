@@ -1,7 +1,6 @@
 const bcrypt = require('bcrypt')
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/user");
-const { Todo } = require('../models/todo');
 const AllowedEmail = require('../models/Allowed');
 
 const registeredUser = async (req, res, next) => {
@@ -44,7 +43,7 @@ const registeredUser = async (req, res, next) => {
             });
             return res.status(400).json({ errors });
         }
-        next(error);
+        res.status(500).json({ message: "Internal server error" });
     }
 };
 
@@ -79,7 +78,7 @@ const loginUser = async (req, res, next) => {
             token: token
         });
     } catch (error) {
-        next(error);
+        res.status(500).json({ message: "Internal server error" });
     }
 }
 
@@ -88,21 +87,25 @@ const reset = async (req, res, next) => {
         const { newName, currentPassword, newPassword, newEmail } = req.body;
 
         const user = await User.findOne({ email: req.user.email });
-        console.log(req.user.email)
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (newName) {
-            user.name = newName;
+        const updates = {};
+        let shouldUpdate = false;
+
+        if (newName && newName !== user.name) {
+            updates.name = newName;
+            shouldUpdate = true;
         }
 
-        if (newEmail) {
+        if (newEmail && newEmail !== user.email) {
             const existingEmail = await User.findOne({ email: newEmail });
             if (existingEmail) {
                 return res.status(400).json({ message: "Email already taken" });
             }
-            user.email = newEmail;
+            updates.email = newEmail;
+            shouldUpdate = true;
         }
 
         if (newPassword) {
@@ -115,15 +118,23 @@ const reset = async (req, res, next) => {
                 return res.status(400).json({ message: "New password must be different from the old password" });
             }
             const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-            user.password = hashedNewPassword;
+            updates.password = hashedNewPassword;
+            shouldUpdate = true;
         }
 
+        if (shouldUpdate === false) {
+            return res.status(400).json({ message: "No updates made. Please update at least one field." });
+        }
+
+        Object.assign(user, updates);
         await user.save();
-        res.json({ message: "User details updated successfully" });
+
+        return res.json({ message: "User details updated successfully" });
     } catch (error) {
         next(error);
     }
 }
+
 
 const addUserByEmail = async (req, res, next) => {
     try {
@@ -174,7 +185,5 @@ const getUserByEmail = async (req, res, next) => {
         next(error);
     }
 }
-
-
 
 module.exports = { registeredUser, loginUser, reset, addUserByEmail, getUserByEmail }

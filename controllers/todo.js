@@ -15,6 +15,7 @@ const createTodo = async (req, res, next) => {
             });
         }
 
+        // Validate assignedTo email if provided
         if (assignedTo) {
             const allowedEmail = await AllowedEmail.findOne({ email: assignedTo });
             if (!allowedEmail) {
@@ -22,11 +23,15 @@ const createTodo = async (req, res, next) => {
             }
         }
 
-        const parsedDueDate = dueDate ? moment(dueDate, 'DD-MM-YY').toDate() : undefined;
-        if (dueDate && !parsedDueDate) {
-            return res.status(400).json({
-                message: 'Invalid due date format. Please use DD-MM-YY.'
-            });
+        // Parse dueDate if provided and validate format
+        let parsedDueDate;
+        if (dueDate) {
+            parsedDueDate = moment(dueDate, 'DD-MM-YY').toDate();
+            if (!parsedDueDate) {
+                return res.status(400).json({
+                    message: 'Invalid due date format. Please use DD-MM-YY.'
+                });
+            }
         }
 
         const newTodo = new Todo({
@@ -36,7 +41,7 @@ const createTodo = async (req, res, next) => {
             checklist,
             dueDate: parsedDueDate,
             section,
-            userId: userId
+            userId
         });
 
         await newTodo.save();
@@ -48,6 +53,7 @@ const createTodo = async (req, res, next) => {
         next(error);
     }
 };
+
 const logTodoById = async (req, res, next) => {
     try {
         const id = '6677c7d2f85295bf113a8556'; // The specific ID
@@ -65,6 +71,30 @@ const logTodoById = async (req, res, next) => {
 const getTodoById = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const userId = req.user?.userId;
+        const userEmail = req.user?.email;
+
+        const todo = await Todo.findById(id);
+        if (!todo) {
+            return res.status(404).json({ message: 'Todo not found' });
+        }
+
+        const isCreator = todo.userId.toString() === userId;
+        const isAssignee = todo.assignedTo === userEmail;
+
+        res.json({
+            todo,
+            isCreator,
+            isAssignee
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const viewTodoById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
         const todo = await Todo.findById(id);
         if (!todo) {
             return res.status(404).json({ message: 'Todo not found' });
@@ -75,6 +105,37 @@ const getTodoById = async (req, res, next) => {
     }
 };
 
+// const getTodos = async (req, res, next) => {
+//     try {
+//         const filter = req.query.filter || 'week';
+//         const { startDate, endDate } = getDateRange(filter);
+//         const userId = req.user.userId;
+//         const userEmail = req.user.email;
+
+//         // Fetch todos where the logged-in user is either the creator or assignedTo
+//         const todos = await Todo.find({
+//             $or: [
+//                 { userId: userId },
+//                 { assignedTo: userEmail }
+//             ],
+//             createdAt: { $gte: startDate, $lte: endDate }
+//         });
+
+        // Filter todos where assignedTo email is in AllowedEmail schema
+        // const allowedEmails = await AllowedEmail.find({}, { email: 1 });
+        // const allowedEmailList = allowedEmails.map(entry => entry.email);
+
+        // const filteredTodos = todos.filter(todo => {
+        //     // Check if assignedTo email is in allowedEmailList
+        //     return allowedEmailList.includes(todo.assignedTo);
+        // });
+
+//         res.json(todos);
+//     } catch (error) {
+//         next(error);
+//     }
+// };
+
 const getTodos = async (req, res, next) => {
     try {
         const filter = req.query.filter || 'week';
@@ -82,22 +143,23 @@ const getTodos = async (req, res, next) => {
         const userId = req.user.userId;
         const userEmail = req.user.email;
 
+        // Fetch all allowed emails
+        const allowedEmails = await AllowedEmail.find({}, { email: 1 });
+        const allowedEmailList = allowedEmails.map(entry => entry.email);
+
         // Fetch todos where the logged-in user is either the creator or assignedTo
         const todos = await Todo.find({
             $or: [
                 { userId: userId },
-                { assignedTo: userEmail }
+                { assignedTo: userEmail },
+                { assignedTo: { $exists: false } } // Include todos without assignedTo
             ],
             createdAt: { $gte: startDate, $lte: endDate }
         });
 
-        // Filter todos where assignedTo email is in AllowedEmail schema
-        const allowedEmails = await AllowedEmail.find({}, { email: 1 });
-        const allowedEmailList = allowedEmails.map(entry => entry.email);
-
+        // Filter todos where assignedTo email is in AllowedEmail schema or doesn't exist
         const filteredTodos = todos.filter(todo => {
-            // Check if assignedTo email is in allowedEmailList
-            return allowedEmailList.includes(todo.assignedTo);
+            return !todo.assignedTo || allowedEmailList.includes(todo.assignedTo);
         });
 
         res.json(filteredTodos);
@@ -105,6 +167,7 @@ const getTodos = async (req, res, next) => {
         next(error);
     }
 };
+
 
 const updateTodo = async (req, res, next) => {
     try {
@@ -237,4 +300,4 @@ const moveTask = async (req, res, next) => {
     }
 };
 
-module.exports = { createTodo, getTodoById, getTodos, updateTodo, deleteTodo, getTaskCounts, moveTask, logTodoById, updateChecklistItem };
+module.exports = { createTodo, getTodoById, getTodos, updateTodo, deleteTodo, getTaskCounts, moveTask, logTodoById, updateChecklistItem, viewTodoById };

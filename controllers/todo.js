@@ -121,14 +121,14 @@ const viewTodoById = async (req, res, next) => {
 //             createdAt: { $gte: startDate, $lte: endDate }
 //         });
 
-        // Filter todos where assignedTo email is in AllowedEmail schema
-        // const allowedEmails = await AllowedEmail.find({}, { email: 1 });
-        // const allowedEmailList = allowedEmails.map(entry => entry.email);
+// Filter todos where assignedTo email is in AllowedEmail schema
+// const allowedEmails = await AllowedEmail.find({}, { email: 1 });
+// const allowedEmailList = allowedEmails.map(entry => entry.email);
 
-        // const filteredTodos = todos.filter(todo => {
-        //     // Check if assignedTo email is in allowedEmailList
-        //     return allowedEmailList.includes(todo.assignedTo);
-        // });
+// const filteredTodos = todos.filter(todo => {
+//     // Check if assignedTo email is in allowedEmailList
+//     return allowedEmailList.includes(todo.assignedTo);
+// });
 
 //         res.json(todos);
 //     } catch (error) {

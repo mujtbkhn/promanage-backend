@@ -15,7 +15,6 @@ const createTodo = async (req, res, next) => {
             });
         }
 
-        // Validate assignedTo email if provided
         if (assignedTo) {
             const allowedEmail = await AllowedEmail.findOne({ email: assignedTo });
             if (!allowedEmail) {
@@ -23,7 +22,6 @@ const createTodo = async (req, res, next) => {
             }
         }
 
-        // Parse dueDate if provided and validate format
         let parsedDueDate;
         if (dueDate) {
             parsedDueDate = moment(dueDate, 'DD-MM-YY').toDate();
@@ -49,20 +47,6 @@ const createTodo = async (req, res, next) => {
             message: 'Todo created successfully',
             todo: newTodo
         });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const logTodoById = async (req, res, next) => {
-    try {
-        const id = '6677c7d2f85295bf113a8556'; // The specific ID
-        const todo = await Todo.findById(id);
-        if (!todo) {
-            return res.status(404).json({ message: 'Todo not found' });
-        }
-        console.log(todo); // Log the todo to the console
-        res.json(todo); // Also return the todo as the response
     } catch (error) {
         next(error);
     }
@@ -105,37 +89,6 @@ const viewTodoById = async (req, res, next) => {
     }
 };
 
-// const getTodos = async (req, res, next) => {
-//     try {
-//         const filter = req.query.filter || 'week';
-//         const { startDate, endDate } = getDateRange(filter);
-//         const userId = req.user.userId;
-//         const userEmail = req.user.email;
-
-//         // Fetch todos where the logged-in user is either the creator or assignedTo
-//         const todos = await Todo.find({
-//             $or: [
-//                 { userId: userId },
-//                 { assignedTo: userEmail }
-//             ],
-//             createdAt: { $gte: startDate, $lte: endDate }
-//         });
-
-// Filter todos where assignedTo email is in AllowedEmail schema
-// const allowedEmails = await AllowedEmail.find({}, { email: 1 });
-// const allowedEmailList = allowedEmails.map(entry => entry.email);
-
-// const filteredTodos = todos.filter(todo => {
-//     // Check if assignedTo email is in allowedEmailList
-//     return allowedEmailList.includes(todo.assignedTo);
-// });
-
-//         res.json(todos);
-//     } catch (error) {
-//         next(error);
-//     }
-// };
-
 const getTodos = async (req, res, next) => {
     try {
         const filter = req.query.filter || 'week';
@@ -143,21 +96,18 @@ const getTodos = async (req, res, next) => {
         const userId = req.user.userId;
         const userEmail = req.user.email;
 
-        // Fetch all allowed emails
         const allowedEmails = await AllowedEmail.find({}, { email: 1 });
         const allowedEmailList = allowedEmails.map(entry => entry.email);
 
-        // Fetch todos where the logged-in user is either the creator or assignedTo
         const todos = await Todo.find({
             $or: [
                 { userId: userId },
                 { assignedTo: userEmail },
-                { assignedTo: { $exists: false } } // Include todos without assignedTo
+                { assignedTo: { $exists: false } } 
             ],
             createdAt: { $gte: startDate, $lte: endDate }
         });
 
-        // Filter todos where assignedTo email is in AllowedEmail schema or doesn't exist
         const filteredTodos = todos.filter(todo => {
             return !todo.assignedTo || allowedEmailList.includes(todo.assignedTo);
         });
@@ -167,7 +117,6 @@ const getTodos = async (req, res, next) => {
         next(error);
     }
 };
-
 
 const updateTodo = async (req, res, next) => {
     try {
@@ -181,7 +130,6 @@ const updateTodo = async (req, res, next) => {
 
         const userId = req.user.userId;
 
-        // Allow only the creator of the todo to update the assignedTo field
         if (assignedTo && todo.userId.toString() === userId) {
             const user = await User.findOne({ email: assignedTo });
             if (!user) {
@@ -248,7 +196,6 @@ const getTaskCounts = async (req, res, next) => {
     try {
         const userId = req.user.userId;
 
-        // Query to count tasks based on different criteria
         const backlogCount = await Todo.countDocuments({ userId: userId, section: 'BACKLOG' });
         const lowPriorityCount = await Todo.countDocuments({ userId: userId, priority: 'LOW' });
         const todoCount = await Todo.countDocuments({ userId: userId, section: 'TODO' });
@@ -258,7 +205,6 @@ const getTaskCounts = async (req, res, next) => {
         const doneCount = await Todo.countDocuments({ userId: userId, section: 'DONE' });
         const dueDateCount = await Todo.countDocuments({ userId: userId, dueDate: { $exists: true } });
 
-        // Construct response with counts
         const counts = {
             backlogTasks: backlogCount,
             lowPriorityTasks: lowPriorityCount,
@@ -300,4 +246,4 @@ const moveTask = async (req, res, next) => {
     }
 };
 
-module.exports = { createTodo, getTodoById, getTodos, updateTodo, deleteTodo, getTaskCounts, moveTask, logTodoById, updateChecklistItem, viewTodoById };
+module.exports = { createTodo, getTodoById, getTodos, updateTodo, deleteTodo, getTaskCounts, moveTask, updateChecklistItem, viewTodoById };

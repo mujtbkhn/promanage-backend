@@ -71,7 +71,6 @@ const loginUser = async (req, res, next) => {
             });
         }
 
-
         const token = jwt.sign({ userId: userDetails._id, name: userDetails.name, email: userDetails.email }, process.env.SECRET_KEY);
         res.json({
             message: "user logged in successfully",
@@ -135,7 +134,6 @@ const reset = async (req, res, next) => {
     }
 }
 
-
 const addUserByEmail = async (req, res, next) => {
     try {
         const { email } = req.body;
@@ -149,18 +147,15 @@ const addUserByEmail = async (req, res, next) => {
             return res.status(400).json({ message: 'Invalid email format' });
         }
 
-        // Ensure the user is authenticated and userId is available in req.user
         if (!req.user || !req.user.userId) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        // Check if the email already exists for the current user
         const existingEmail = await AllowedEmail.findOne({ email, userId: req.user.userId });
         if (existingEmail) {
             return res.status(400).json({ message: 'Email already exists in allowed list' });
         }
 
-        // Create a new AllowedEmail document
         const newAllowedEmail = new AllowedEmail({ email, userId: req.user.userId });
         await newAllowedEmail.save();
 
@@ -172,12 +167,10 @@ const addUserByEmail = async (req, res, next) => {
 
 const getUserByEmail = async (req, res, next) => {
     try {
-        // Ensure the user is authenticated and userId is available in req.user
         if (!req.user || !req.user.userId) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        // Fetch all allowed emails for the current user
         const allowedEmails = await AllowedEmail.find({ userId: req.user.userId });
 
         res.json({ allowedEmails });

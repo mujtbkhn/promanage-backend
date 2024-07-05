@@ -12,8 +12,6 @@ const AllowedEmailSchema = new mongoose.Schema({
     }
 });
 
-// Ensure each email is unique per user
-
 const AllowedEmail = mongoose.model('AllowedEmail', AllowedEmailSchema);
 
 module.exports = AllowedEmail;

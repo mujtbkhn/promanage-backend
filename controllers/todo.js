@@ -3,15 +3,16 @@ const { Todo } = require('../models/todo');
 const { User } = require('../models/user');
 const { getDateRange } = require('../utils/dateFilters');
 const moment = require('moment');
+    
 
 const createTodo = async (req, res, next) => {
     try {
         const { title, priority, assignedTo, checklist, dueDate, section } = req.body;
         const userId = req.user.userId;
 
-        if (!title || !priority || !checklist) {
+        if (!title || !priority || !Array.isArray(checklist) || checklist.length === 0) {
             return res.status(400).json({
-                message: 'Title, priority, and checklist are required'
+                message: 'Title, priority, and non-empty checklist are required'
             });
         }
 
@@ -24,12 +25,13 @@ const createTodo = async (req, res, next) => {
 
         let parsedDueDate;
         if (dueDate) {
-            parsedDueDate = moment(dueDate, 'DD-MM-YY').toDate();
-            if (!parsedDueDate) {
+            parsedDueDate = moment(dueDate, 'DD-MM-YYYY');
+            if (!parsedDueDate.isValid()) {
                 return res.status(400).json({
                     message: 'Invalid due date format. Please use DD-MM-YY.'
                 });
             }
+            parsedDueDate = parsedDueDate.toDate();
         }
 
         const newTodo = new Todo({
@@ -48,7 +50,8 @@ const createTodo = async (req, res, next) => {
             todo: newTodo
         });
     } catch (error) {
-        next(error);
+        // next(error);
+        throw new error(error)
     }
 };
 
@@ -142,7 +145,7 @@ const updateTodo = async (req, res, next) => {
         if (priority) todo.priority = priority;
         if (checklist) todo.checklist = checklist;
         if (dueDate) {
-            const parsedDueDate = moment(dueDate, 'DD-MM-YY').toDate();
+            const parsedDueDate = moment(dueDate, 'DD-MM-YYYY').toDate();
             if (!parsedDueDate) {
                 return res.status(400).json({ message: 'Invalid due date format. Please use DD-MM-YY.' });
             }

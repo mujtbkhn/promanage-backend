@@ -15,7 +15,7 @@ app.use(cors())
 app.use(express.json())
 app.use(helmet())
 
-app.disable('x-powered-by');
+// app.disable('x-powered-by');
 
 
 app.use('/api/v1/auth', authRoute)

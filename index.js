@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
+const helmet = require('helmet')
 const mongoose = require('mongoose')
 
 const authRoute = require('./routes/auth')
@@ -12,6 +13,10 @@ const app = express()
 
 app.use(cors())
 app.use(express.json())
+app.use(helmet())
+
+app.disable('x-powered-by');
+
 
 app.use('/api/v1/auth', authRoute)
 app.use('/api/v1/todo', todoRoute)

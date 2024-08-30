@@ -2,13 +2,14 @@ const AllowedEmail = require('../models/Allowed');
 const { Todo } = require('../models/todo');
 const { User } = require('../models/user');
 const { getDateRange } = require('../utils/dateFilters');
-const moment = require('moment');
     
 
 const createTodo = async (req, res, next) => {
     try {
-        const { title, priority, assignedTo, checklist, dueDate, section } = req.body;
+        const { title, priority, assignedTo, checklist, date, section } = req.body;
         const userId = req.user.userId;
+
+        console.log("Received todo data:", req.body);
 
         if (!title || !priority || !Array.isArray(checklist) || checklist.length === 0) {
             return res.status(400).json({
@@ -22,24 +23,13 @@ const createTodo = async (req, res, next) => {
                 return res.status(400).json({ message: 'Assigned user email is not allowed' });
             }
         }
-
-        let parsedDueDate;
-        if (dueDate) {
-            parsedDueDate = moment(dueDate, 'DD-MM-YYYY');
-            if (!parsedDueDate.isValid()) {
-                return res.status(400).json({
-                    message: 'Invalid due date format. Please use DD-MM-YY.'
-                });
-            }
-            parsedDueDate = parsedDueDate.toDate();
-        }
-
+        
         const newTodo = new Todo({
             title,
             priority,
             assignedTo,
             checklist,
-            dueDate: parsedDueDate,
+            date,
             section,
             userId
         });
@@ -50,8 +40,8 @@ const createTodo = async (req, res, next) => {
             todo: newTodo
         });
     } catch (error) {
-        // next(error);
-        throw new error(error)
+        next(error);
+        // throw new error(error)
     }
 };
 
@@ -124,7 +114,7 @@ const getTodos = async (req, res, next) => {
 const updateTodo = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title, priority, checklist, dueDate, section, assignedTo } = req.body;
+        const { title, priority, checklist, date, section, assignedTo } = req.body;
         const todo = await Todo.findById(id);
 
         if (!todo) {
@@ -144,12 +134,8 @@ const updateTodo = async (req, res, next) => {
         if (title) todo.title = title;
         if (priority) todo.priority = priority;
         if (checklist) todo.checklist = checklist;
-        if (dueDate) {
-            const parsedDueDate = moment(dueDate, 'DD-MM-YYYY').toDate();
-            if (!parsedDueDate) {
-                return res.status(400).json({ message: 'Invalid due date format. Please use DD-MM-YY.' });
-            }
-            todo.dueDate = parsedDueDate;
+        if (date) {
+            todo.date = date;
         }
         if (section) todo.section = section;
 
@@ -206,7 +192,7 @@ const getTaskCounts = async (req, res, next) => {
         const inProgressCount = await Todo.countDocuments({ userId: userId, section: 'IN PROGRESS' });
         const moderatePriorityCount = await Todo.countDocuments({ userId: userId, priority: 'MODERATE' });
         const doneCount = await Todo.countDocuments({ userId: userId, section: 'DONE' });
-        const dueDateCount = await Todo.countDocuments({ userId: userId, dueDate: { $exists: true } });
+        const dateCount = await Todo.countDocuments({ userId: userId, date: { $exists: true } });
 
         const counts = {
             backlogTasks: backlogCount,
@@ -216,7 +202,7 @@ const getTaskCounts = async (req, res, next) => {
             inProgressTasks: inProgressCount,
             moderatePriorityTasks: moderatePriorityCount,
             doneTasks: doneCount,
-            dueDateTasks: dueDateCount
+            dateTasks: dateCount
         };
 
         res.json(counts);

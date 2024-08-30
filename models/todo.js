@@ -14,8 +14,8 @@ const TodoSchema = new mongoose.Schema({
         type: String,
         ref: 'User',
         validate: {
-            validator: function(v) {
-                return /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/.test(v);
+            validator: function (v) {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
             },
             message: props => `${props.value} is not a valid email!`
         },
@@ -24,15 +24,14 @@ const TodoSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: false 
+        required: false
     },
     checklist: {
         type: [{ item: String, completed: Boolean }],
         required: [true, 'Checklist is required']
     },
-    dueDate: {
+    date: {
         type: Date,
-        required: false
     },
     section: {
         type: String,
